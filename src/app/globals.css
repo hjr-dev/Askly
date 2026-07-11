@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+:root {
+  --background: #17181a;
+  --sidebar: #121314;
+  --input: #222527;
+  --input-border: #34373b;
+  --surface: #1e2124;
+  --surface-hover: #2a2e31;
+  --border: #2a2d30;
+  --foreground: #ecedee;
+  --text-secondary: #9ba1a6;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --on-accent: #04342c;
+  --sidebar-w: 288px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono-jb);
+  --font-display: var(--font-space-grotesk);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+}
+
+button,
+a,
+input,
+textarea {
+  outline-offset: 4px;
+}
+
+::selection {
+  background: rgba(45, 212, 191, 0.25);
+  color: white;
+}
+
+@keyframes askly-node-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+@keyframes askly-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.phone-dark .react-tel-input .form-control {
+  width: 100%;
+  height: 50px;
+  border-radius: 9999px;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--foreground);
+}
+
+.phone-dark .react-tel-input .flag-dropdown {
+  border-color: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px 0 0 9999px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.phone-dark .react-tel-input .selected-flag:hover,
+.phone-dark .react-tel-input .selected-flag:focus,
+.phone-dark .react-tel-input .flag-dropdown.open,
+.phone-dark .react-tel-input .country-list {
+  background: var(--surface);
+}
+
+.phone-dark .react-tel-input .country-list .country:hover,
+.phone-dark .react-tel-input .country-list .country.highlight {
+  background: var(--surface-hover);
+}
