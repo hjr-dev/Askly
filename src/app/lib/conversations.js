@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/app/lib/supabaseAdmin";
+import { fallbackConversationTitle } from "@/app/lib/conversationTitles";
 
 const MISSING_TABLE_HINT =
   "Falta la tabla public.conversations/messages en Supabase. Ejecuta supabase/conversations.sql en el SQL Editor.";
@@ -14,9 +15,7 @@ function isMissingTable(error) {
 }
 
 export function titleFromMessage(message) {
-  const words = message.trim().split(/\s+/).slice(0, 6);
-  const title = words.join(" ");
-  return title.length < message.trim().length ? `${title}…` : title || "Nueva conversación";
+  return fallbackConversationTitle(message);
 }
 
 export async function createConversation(userId, title) {
@@ -47,7 +46,7 @@ export async function getConversationForUser(conversationId, userId) {
 export async function listConversationMessages(conversationId) {
   const { data, error } = await supabaseAdmin
     .from("messages")
-    .select("role, content, created_at")
+    .select("id, role, content, created_at")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: true });
 
@@ -57,12 +56,15 @@ export async function listConversationMessages(conversationId) {
 }
 
 export async function insertMessage(conversationId, role, content) {
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("messages")
-    .insert({ conversation_id: conversationId, role, content });
+    .insert({ conversation_id: conversationId, role, content })
+    .select("id, role, content, created_at")
+    .single();
 
   if (isMissingTable(error)) throw new Error(MISSING_TABLE_HINT);
   if (error) throw error;
+  return data;
 }
 
 export async function touchConversation(conversationId) {
@@ -73,6 +75,20 @@ export async function touchConversation(conversationId) {
 
   if (isMissingTable(error)) throw new Error(MISSING_TABLE_HINT);
   if (error) throw error;
+}
+
+export async function updateConversationTitle(conversationId, userId, title) {
+  const { data, error } = await supabaseAdmin
+    .from("conversations")
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq("id", conversationId)
+    .eq("user_id", userId)
+    .select("id, title")
+    .single();
+
+  if (isMissingTable(error)) throw new Error(MISSING_TABLE_HINT);
+  if (error) throw error;
+  return data;
 }
 
 export async function deleteConversation(conversationId, userId) {

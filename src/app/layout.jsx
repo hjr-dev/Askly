@@ -4,7 +4,11 @@ import { SubscriptionProvider } from "@/app/hooks/useSubscription";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono-jb" });
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500"], variable: "--font-space-grotesk" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-space-grotesk",
+});
 
 export const metadata = {
   icons: {

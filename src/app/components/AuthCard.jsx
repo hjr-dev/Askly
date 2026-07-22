@@ -20,7 +20,7 @@ export default function AuthCard({ title, subtitle, children, footer, closeHref 
           <Logo size={48} />
         </div>
 
-        <h1 className="text-center text-3xl font-semibold text-white">{title}</h1>
+        <h1 className="text-center text-3xl font-normal tracking-[-0.02em] text-[#dedbd5]">{title}</h1>
         {subtitle && (
           <p className="mt-2 text-center text-sm text-[var(--text-secondary)]">{subtitle}</p>
         )}

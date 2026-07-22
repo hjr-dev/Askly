@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useRef, useState } from "react";
 import { supabase } from "@/app/lib/supabase";
+import { parseSSELine, sanitizeThinkTags } from "@/app/lib/sse";
 
 export function useAskly({ conversationId: initialConversationId = null, initialMessages = [] } = {}) {
   const [messages, setMessages] = useState(initialMessages);
@@ -10,9 +11,20 @@ export function useAskly({ conversationId: initialConversationId = null, initial
   const abortRef = useRef(null);
 
   const sendMessage = useCallback(
-    async (text) => {
-      if (!text.trim()) return;
-      const userMsg = { role: "user", content: text };
+    async (text, attachments = []) => {
+      const trimmedText = text.trim();
+      if (!trimmedText && attachments.length === 0) return;
+
+      const userMsg = {
+        role: "user",
+        content: trimmedText,
+        attachments: attachments.map((file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: "uploading",
+        })),
+      };
       setMessages((prev) => [...prev, userMsg, { role: "model", content: "" }]);
       setLoading(true);
 
@@ -22,7 +34,18 @@ export function useAskly({ conversationId: initialConversationId = null, initial
       const fail = (errorText) => {
         setMessages((prev) => {
           const updated = [...prev];
-          updated[updated.length - 1].content = errorText;
+          const userIndex = updated.length - 2;
+          if (userIndex >= 0 && updated[userIndex]?.attachments?.length) {
+            updated[userIndex] = {
+              ...updated[userIndex],
+              attachments: updated[userIndex].attachments.map((attachment) => ({
+                ...attachment,
+                status: attachment.id ? attachment.status || "ready" : "error",
+                error: attachment.id ? attachment.error : errorText,
+              })),
+            };
+          }
+          updated[updated.length - 1].content = sanitizeThinkTags(errorText);
           return updated;
         });
       };
@@ -34,13 +57,29 @@ export function useAskly({ conversationId: initialConversationId = null, initial
           return;
         }
 
+        const requestBody =
+          attachments.length > 0
+            ? (() => {
+                const formData = new FormData();
+                formData.append("message", trimmedText);
+                if (conversationId) formData.append("conversationId", conversationId);
+                for (const file of attachments) formData.append("files", file);
+                return formData;
+              })()
+            : JSON.stringify({ conversationId, message: trimmedText });
+
+        const headers = {
+          Authorization: `Bearer ${data.session.access_token}`,
+        };
+
+        if (!attachments.length) {
+          headers["Content-Type"] = "application/json";
+        }
+
         const res = await fetch("/api/conversations/messages", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.session.access_token}`,
-          },
-          body: JSON.stringify({ conversationId, message: text }),
+          headers,
+          body: requestBody,
           signal: controller.signal,
         });
 
@@ -63,23 +102,52 @@ export function useAskly({ conversationId: initialConversationId = null, initial
           buffer = lines.pop();
 
           for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const json = line.slice(6).trim();
-            if (!json) continue;
-            try {
-              const parsed = JSON.parse(json);
-              if (parsed.__meta__) {
-                setConversationId(parsed.conversationId);
-                setTitle(parsed.title);
-                continue;
+            const parsed = parseSSELine(line);
+            if (!parsed) continue;
+
+            if (parsed.__meta__) {
+              setConversationId(parsed.conversationId);
+              setTitle(parsed.title);
+              if (parsed.attachments?.length) {
+                setMessages((prev) => {
+                  const updated = [...prev];
+                  const userIndex = updated.length - 2;
+                  const modelIndex = updated.length - 1;
+
+                  if (userIndex >= 0 && updated[userIndex]?.role === "user") {
+                    updated[userIndex] = {
+                      ...updated[userIndex],
+                      id: parsed.userMessageId || updated[userIndex].id,
+                      attachments: parsed.attachments,
+                    };
+                  }
+
+                  if (modelIndex >= 0 && updated[modelIndex]?.role === "model") {
+                    updated[modelIndex] = {
+                      ...updated[modelIndex],
+                      sources: parsed.attachments,
+                    };
+                  }
+
+                  return updated;
+                });
               }
-              const chunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text || "";
+              continue;
+            }
+
+            if (parsed.error) {
+              fail(parsed.error);
+              continue;
+            }
+
+            const chunk = sanitizeThinkTags(parsed.content || "");
+            if (chunk) {
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[updated.length - 1].content += chunk;
                 return updated;
               });
-            } catch {}
+            }
           }
         }
       } catch (err) {

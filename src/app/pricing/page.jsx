@@ -3,19 +3,52 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Footer from "@/app/components/Footer";
-import Sidebar from "@/app/components/Sidebar";
+import { ChevronLeft } from "lucide-react";
 import MejorarButton from "@/app/components/MejorarButton";
 import { supabase } from "@/app/lib/supabase";
 import { useSubscription } from "@/app/hooks/useSubscription";
 import { PLANS } from "@/app/lib/plans";
 
 const CURRENCY_SYMBOLS = { eur: "€", usd: "$", gbp: "£" };
+const PRICING_CARD_LABELS = {
+  free: "Gratis",
+  pro: "Pro",
+  team: "Equipos",
+};
+
+const DEFAULT_PRICING_CTAS = {
+  pro: "Pasar a Pro",
+  team: "Elegir Equipos",
+};
 
 function formatPrice(price) {
   if (!price) return null;
   const symbol = CURRENCY_SYMBOLS[price.currency] || price.currency.toUpperCase() + " ";
   return `${(price.amount / 100).toFixed(0)} ${symbol}`;
+}
+
+function PricingBackButton() {
+  const router = useRouter();
+
+  const goBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push("/");
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={goBack}
+      aria-label="Volver"
+      className="fixed left-4 top-4 z-30 grid size-8 place-items-center rounded-full bg-transparent text-[var(--text-secondary)] transition-colors duration-200 hover:bg-white/[0.03] hover:text-[var(--foreground)]"
+    >
+      <ChevronLeft className="size-4" />
+    </button>
+  );
 }
 
 function PricingContent() {
@@ -87,37 +120,24 @@ function PricingContent() {
 
     if (isCurrent) {
       return (
-        <div className="mt-10 space-y-2">
-          <div
-            style={{
-              borderColor: `${plan.accent}40`,
-              backgroundColor: plan.accentSoft,
-              color: plan.accent,
-            }}
-            className="rounded-full border px-5 py-3 text-center text-sm font-semibold"
-          >
-            Estás en {plan.label}
-          </div>
-
-          <button
-            onClick={manageSubscription}
-            disabled={isBusy}
-            className="flex w-full items-center justify-center rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--foreground)] transition-colors duration-200 hover:bg-[var(--surface-hover)] disabled:opacity-60"
-          >
-            {loadingAction === "portal" ? "Abriendo portal..." : "Gestionar suscripción"}
-          </button>
+        <div
+          aria-disabled="true"
+          className="mt-10 rounded-full border border-[var(--border)] px-5 py-3 text-center text-sm font-medium text-[var(--text-secondary)] opacity-75"
+        >
+          Plan actual
         </div>
       );
     }
 
     if (isPaid) {
+      const targetLabel = PRICING_CARD_LABELS[planId] || PLANS[planId].label;
       return (
         <button
           onClick={manageSubscription}
           disabled={isBusy}
-          className="mt-10 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--border)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors duration-200 hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-10 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--border)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition-colors duration-200 hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loadingAction === "portal" ? "Abriendo portal..." : `Cambiar a ${PLANS[planId].label}`}
+          {loadingAction === "portal" ? "Abriendo portal..." : `Cambiar a ${targetLabel}`}
         </button>
       );
     }
@@ -127,11 +147,11 @@ function PricingContent() {
         onClick={() => startCheckout(planId)}
         disabled={isBusy}
         style={{ backgroundColor: PLANS[planId].accent }}
-        className="mt-10 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-[var(--on-accent)] transition-all duration-200 hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-10 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-[var(--on-accent)] transition-[opacity,background-color,border-color] duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loadingAction === `checkout:${planId}`
           ? "Abriendo Stripe..."
-          : `Obtener plan ${PLANS[planId].label}`}
+          : DEFAULT_PRICING_CTAS[planId] || `Elegir ${PRICING_CARD_LABELS[planId] || PLANS[planId].label}`}
         {!isBusy && <span aria-hidden="true">→</span>}
       </button>
     );
@@ -142,22 +162,18 @@ function PricingContent() {
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <Sidebar />
+      <PricingBackButton />
       <MejorarButton />
 
-      <div className="flex min-h-screen flex-col pt-16 lg:pl-72 lg:pt-0">
-        <main className="relative flex-1 px-5 py-20 sm:py-28">
+      <div className="flex min-h-screen flex-col pt-16 lg:pt-0">
+        <main className="relative flex-1 px-5 py-24 sm:py-32">
           <section className="relative mx-auto max-w-6xl">
-            <div className="mx-auto max-w-2xl text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-medium uppercase tracking-[0.22em] text-[var(--text-secondary)]">
-                Planes
-              </span>
-
-              <h1 className="mt-6 text-balance font-[family-name:var(--font-display)] text-4xl font-medium tracking-tight text-[var(--foreground)] sm:text-6xl">
-                Elige cómo quieres avanzar con Askly.
+            <div className="mx-auto max-w-[850px] text-center">
+              <h1 className="text-balance font-[family-name:var(--font-display)] text-[34px] font-normal leading-[1.08] tracking-[-0.035em] text-[#dedbd5] sm:text-5xl">
+                Un plan para cada forma de trabajar.
               </h1>
 
-              <p className="mx-auto mt-5 max-w-md text-base leading-7 text-[var(--text-secondary)]">
+              <p className="mx-auto mt-6 max-w-md text-base leading-7 text-[var(--text-secondary)]">
                 {isPaid
                   ? `Estás en el plan ${plan.label}. Puedes gestionar tu suscripción o cambiar de plan.`
                   : "Empieza gratis y crece a tu ritmo. Cambia de plan cuando quieras, sin ataduras."}
@@ -182,13 +198,13 @@ function PricingContent() {
               }`}
             >
               {!isPaid && (
-                <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 transition-colors duration-200 hover:bg-[var(--surface-hover)]">
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                    Free
+                <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 transition-[border-color,background-color] duration-200 hover:bg-[var(--surface-hover)]">
+                  <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                    Gratis
                   </h2>
 
                   <div className="mt-5 flex items-baseline gap-1">
-                    <span className="text-4xl font-semibold text-[var(--foreground)]">0 €</span>
+                    <span className="text-4xl font-normal text-[var(--foreground)]">0 €</span>
                     <span className="text-sm text-[var(--text-secondary)]">/mes</span>
                   </div>
 
@@ -209,38 +225,38 @@ function PricingContent() {
 
                   <Link
                     href="/"
-                    className="mt-10 flex w-full items-center justify-center rounded-full border border-[var(--border)] px-5 py-3 text-sm font-semibold text-[var(--foreground)] transition-colors duration-200 hover:bg-[var(--surface-hover)]"
+                    className="mt-10 flex w-full items-center justify-center rounded-full border border-[var(--border)] px-5 py-3 text-sm font-medium text-[var(--foreground)] transition-colors duration-200 hover:bg-[var(--surface-hover)]"
                   >
-                    Start Free
+                    Empezar gratis
                   </Link>
                 </article>
               )}
 
               <article
-                className={`relative rounded-2xl border bg-[var(--surface)] p-8 transition-colors duration-200 hover:bg-[var(--surface-hover)] ${
+                className={`relative rounded-2xl border bg-[var(--surface)] p-8 transition-[border-color,background-color] duration-200 hover:bg-[var(--surface-hover)] ${
                   plan.id === "pro"
                     ? "border-[var(--accent)]/60"
                     : "border-[var(--accent)]/40"
                 } ${!isPaid ? "lg:-translate-y-4" : ""}`}
               >
                 {!isPaid && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--on-accent)]">
-                    Most Popular
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-[var(--on-accent)]">
+                    Recomendado
                   </span>
                 )}
 
                 {isPaid && plan.id === "pro" && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--on-accent)]">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-[var(--on-accent)]">
                     Plan actual
                   </span>
                 )}
 
-                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--foreground)]">
+                <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--foreground)]">
                   Pro
                 </h2>
 
                 <div className="mt-5 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold text-[var(--foreground)]">
+                  <span className="text-4xl font-normal text-[var(--foreground)]">
                     {proPrice ?? "…"}
                   </span>
                   <span className="text-sm text-[var(--text-secondary)]">/mes</span>
@@ -265,24 +281,24 @@ function PricingContent() {
               </article>
 
               <article
-                className={`relative rounded-2xl border bg-[var(--surface)] p-8 transition-colors duration-200 hover:bg-[var(--surface-hover)] ${
+                className={`relative rounded-2xl border bg-[var(--surface)] p-8 transition-[border-color,background-color] duration-200 hover:bg-[var(--surface-hover)] ${
                   plan.id === "team"
                     ? "border-[var(--accent)]/60"
                     : "border-[var(--border)]"
                 }`}
               >
                 {isPaid && plan.id === "team" && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--on-accent)]">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-[var(--on-accent)]">
                     Plan actual
                   </span>
                 )}
 
-                <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
-                  Team
+                <h2 className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Equipos
                 </h2>
 
                 <div className="mt-5 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold text-[var(--foreground)]">
+                  <span className="text-4xl font-normal text-[var(--foreground)]">
                     {teamPrice ?? "…"}
                   </span>
                   <span className="text-sm text-[var(--text-secondary)]">/mes</span>
@@ -308,8 +324,6 @@ function PricingContent() {
             </div>
           </section>
         </main>
-
-        <Footer />
       </div>
     </div>
   );

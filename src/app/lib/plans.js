@@ -4,17 +4,17 @@
 //
 // dailyMessageLimit se aplica en el backend (ver lib/conversations.js +
 // /api/conversations/messages), no solo en el cliente, para que el gating
-// de Free sea real y no un contador de sesión que se resetea al recargar.
+// del plan Gratis sea real y no un contador de sesión que se resetea al recargar.
 export const PLANS = {
   free: {
     id: "free",
-    label: "Free",
+    label: "Gratis",
     accent: "#2DD4BF", // teal: mismo acento de marca para todos los planes
     accentSoft: "rgba(45, 212, 191, 0.12)",
     dailyMessageLimit: 20,
     priceEnvVar: null,
     features: ["20 mensajes al día", "IA básica", "Soporte de la comunidad"],
-    ctaLabel: "Upgrade",
+    ctaLabel: "Mejorar plan",
   },
   pro: {
     id: "pro",
@@ -30,23 +30,23 @@ export const PLANS = {
       "Historial de conversaciones",
       "Soporte prioritario",
     ],
-    ctaLabel: "Manage Subscription",
+    ctaLabel: "Gestionar suscripción",
   },
   team: {
     id: "team",
-    label: "Team",
+    label: "Equipos",
     accent: "#2DD4BF",
     accentSoft: "rgba(45, 212, 191, 0.12)",
     dailyMessageLimit: Infinity,
     priceEnvVar: "NEXT_PUBLIC_STRIPE_TEAM_PRICE_ID",
     features: [
       "Todo lo de Pro",
-      "Workspace de equipo",
+      "Espacio de trabajo de equipo",
       "Conversaciones compartidas",
       "Facturación centralizada",
       "Herramientas de administración",
     ],
-    ctaLabel: "Manage Team Plan",
+    ctaLabel: "Gestionar suscripción",
   },
 };
 

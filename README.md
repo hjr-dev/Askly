@@ -1,57 +1,125 @@
 # 💬 Askly
 
-Aplicación de chat con IA desarrollada con Next.js 16, Supabase, Google Gemini y Stripe. El objetivo principal del proyecto fue profundizar en la autenticación con Supabase Auth, la sincronización en tiempo real con Supabase Realtime, la integración de APIs externas y la gestión de suscripciones mediante Stripe.
+Askly es un proyecto personal desarrollado con Next.js, Supabase, Groq y Stripe como parte de mi proceso de aprendizaje continuo en desarrollo Full Stack.
 
-> 💻 **Repositorio:** https://github.com/Hajarprog/Askly
+El objetivo del proyecto ha sido construir una aplicación moderna inspirada en asistentes conversacionales con IA, incorporando funcionalidades como autenticación, historial persistente, análisis de documentos PDF y gestión de suscripciones para seguir profundizando en tecnologías y arquitecturas utilizadas en aplicaciones reales.
 
-![Askly preview](./public/preview.png)
+
+---
+
+## Vista previa
+
+![Inicio](./public/01-chat-experience.png)
 
 ---
 
 ## Características
 
-- Autenticación completa con **Supabase Auth**. (registro, inicio y cierre de sesión).
-- Registro con selector de teléfono y país (**react-phone-input-2**).
-- Chat con respuestas en streaming mediante **Google Gemini 2.5 Flash**.
-- Historial persistente de conversaciones y mensajes almacenado en **Supabase**.
-- Eliminación de conversaciones desde el sidebar mediante un menú contextual.
-- Sistema de suscripciones con **Stripe Checkout**, **Billing Portal** y **webhooks**.
-- Límite diario de mensajes para el plan Free, validado en el servidor.
-- Sincronización automática del plan activo mediante **Supabase Realtime** con polling como mecanismo de respaldo.
-- API protegida mediante validación del usuario con **Bearer Token**.
+### Inteligencia Artificial
+
+- Conversaciones con IA mediante **Groq**.
+- Respuestas en **streaming** utilizando **Server-Sent Events (SSE)**.
+- Integración con el modelo **Qwen 3 32B**.
+- Historial persistente de conversaciones.
+- Creación automática de títulos para cada conversación.
+- Renderizado de respuestas en Markdown.
+- Bloques de código con formato monoespaciado y estilo diferenciado.
+- Transcripción de voz a texto mediante Whisper (Groq) para dictar mensajes.
+
+---
+
+### Gestión de documentos
+
+- Subida de PDFs y archivos de texto o código como adjuntos (hasta 5 por mensaje).
+- Extracción automática del contenido.
+- Uso del contenido extraído como contexto para la respuesta de la IA.
+- Visor de PDF integrado, con descarga mediante enlace firmado.
+
+---
+
+### Autenticación
+
+- Registro e inicio de sesión mediante **Supabase Auth**.
+- Inicio de sesión seguro.
+- Cierre de sesión.
+- Registro con selector internacional de teléfono.
+- Redirección a inicio de sesión al intentar abrir una conversación sin sesión activa.
+
+---
+
+### Conversaciones
+
+- Historial persistente.
+- Renombrado y eliminación de conversaciones.
+- Búsqueda dentro del historial de conversaciones.
+- Persistencia de mensajes en PostgreSQL.
+- Recuperación automática del historial.
+- Organización mediante sidebar.
+
+---
+
+### Suscripciones
+
+- Stripe Checkout.
+- Stripe Billing Portal.
+- Planes Free, Pro y Team.
+- Sincronización automática mediante Webhooks.
+- Actualización en tiempo real utilizando Supabase Realtime.
+- Polling como mecanismo de respaldo cuando Realtime no está disponible.
+
+---
+
+### Seguridad
+
+- Validación del usuario mediante Bearer Token en las rutas de la API que acceden a datos de usuario.
+- Row Level Security (RLS) en Supabase.
+- Límite diario del plan Free calculado exclusivamente en servidor.
+
+---
+
+### Experiencia de usuario
+
+- Diseño responsive.
 - Interfaz inspirada en Claude.
-- Diseño responsive para móvil, tablet y escritorio.
+- Navegación fluida.
+- Gestión automática del estado de la suscripción.
+- Feedback visual durante las respuestas en streaming.
 
 ---
 
 ## Tecnologías
 
 | Tecnología | Uso |
-|---|---|
-| Next.js 16 App Router | Framework principal y Route Handlers |
-| React 19 | UI |
-| Tailwind CSS 4 | Estilos |
-| Supabase | Auth, Postgres, RLS y Realtime |
-| Stripe | Checkout, Billing Portal, suscripciones y webhooks |
-| Google Gemini API | Respuestas del asistente en streaming |
-| lucide-react | Iconos |
-| react-phone-input-2 | Selector de teléfono y país en el registro |
+|------------|-----|
+| **Next.js 16 (App Router)** | Framework principal y Route Handlers |
+| **React 19** | Construcción de la interfaz |
+| **Tailwind CSS 4** | Sistema de estilos |
+| **Supabase** | Autenticación, PostgreSQL, Row Level Security, Storage y Realtime |
+| **Groq API** | Generación de respuestas de IA (Qwen 3 32B) y transcripción de voz (Whisper) |
+| **Stripe** | Checkout, Billing Portal, suscripciones y Webhooks |
+| **unpdf** | Extracción de texto de archivos PDF en el servidor |
+| **lucide-react** | Iconografía |
+| **react-phone-input-2** | Selector internacional de teléfono |
 
 ---
 
 ## Primeros pasos
 
-### 1. Clona el repositorio
+### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/Hajarprog/Askly.git
+git clone https://github.com/hjr-dev/Askly.git
+
 cd Askly
+
 npm install
 ```
 
+---
+
 ### 2. Variables de entorno
 
-Copia `.env.example` a `.env.local` y rellena los valores:
+Copia el archivo `.env.example` a `.env.local` y completa los valores correspondientes.
 
 ```bash
 cp .env.example .env.local
@@ -69,69 +137,156 @@ STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=
 NEXT_PUBLIC_STRIPE_TEAM_PRICE_ID=
 
-# Google Gemini
-GEMINI_API_KEY=
+# Groq
+GROQ_API_KEY=
 ```
+
+---
 
 ### 3. Base de datos
 
-Ejecuta en el SQL Editor de Supabase, en orden:
+Ejecuta los siguientes scripts SQL en el **SQL Editor** de Supabase respetando este orden:
 
-```
+```text
 supabase/subscriptions.sql
+
 supabase/conversations.sql
+
+supabase/attachments.sql
 ```
 
-Esto crea:
+Estos scripts crean toda la estructura necesaria para la aplicación:
 
-- `subscriptions`
-- `conversations`
-- `messages`
-- Row Level Security por usuario en las tres tablas
-- índices (`user_id, updated_at` en `conversations`; `conversation_id, created_at` en `messages`)
-- relación `messages.conversation_id` con `ON DELETE CASCADE`
+- tabla `subscriptions`
+- tabla `conversations`
+- tabla `messages`
+- tabla `message_attachments`, junto con el bucket privado `message-attachments` en Supabase Storage
+- políticas **Row Level Security** para cada usuario
+- índices para optimizar las consultas
+- relación entre conversaciones, mensajes y adjuntos mediante **ON DELETE CASCADE**
 
-Gracias a `ON DELETE CASCADE`, al borrar una conversación se eliminan automáticamente sus mensajes.
+Gracias a esta relación, al eliminar una conversación también se eliminan automáticamente todos sus mensajes y adjuntos asociados.
 
-### 4. Webhook de Stripe en local
+---
 
-El servidor de desarrollo corre en `localhost:3000`, pero Stripe necesita una URL pública para enviar los eventos del webhook. Este proyecto expone el local con **ngrok** en lugar de `stripe listen`:
+### 4. Configuración de Stripe
+
+Askly utiliza Stripe para gestionar:
+
+- Stripe Checkout
+- Billing Portal
+- Suscripciones
+- Webhooks
+- Sincronización del estado de los planes
+
+Durante el desarrollo es necesario exponer el servidor local mediante una URL pública para que Stripe pueda enviar correctamente los eventos del webhook.
+
+---
+
+### 5. Configuración de ngrok
+
+Inicia el túnel hacia tu servidor local:
 
 ```bash
 ngrok http 3000
 ```
 
-Esto da una URL pública tipo `https://<subdominio>.ngrok-free.dev`. Con esa URL:
+Obtendrás una URL similar a:
 
-1. Ve a [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks) y añade un endpoint: `https://<subdominio>.ngrok-free.dev/api/stripe/webhook`.
-2. Copia el `whsec_...` que Stripe genera para ese endpoint en `STRIPE_WEBHOOK_SECRET`.
+```text
+https://xxxxxxxx.ngrok-free.dev
+```
 
-**¿Por qué ngrok y no `stripe listen`?** `stripe listen` reenvía los eventos directamente desde la CLI a tu máquina sin pasar por un endpoint real registrado en el Dashboard, así que solo sirve para probar en local y no expone tu app al exterior. Usando ngrok en su lugar:
+Después:
 
-- Se prueba contra un endpoint de Stripe **real**, configurado igual que en producción (misma ruta del código que valida la firma, mismo flujo).
-- La URL pública también sirve para probar Stripe Checkout/redirects, o abrir la app desde el móvil u otro dispositivo en la misma prueba.
-- El inspector web de ngrok (`http://127.0.0.1:4040`) permite ver cada request/response entrante en crudo, útil para depurar el payload del webhook.
-- No depende de tener la Stripe CLI instalada y autenticada.
+1. Accede al Dashboard de Stripe.
+2. Ve a **Developers → Webhooks**.
+3. Crea un nuevo endpoint apuntando a:
 
-La contrapartida: cada vez que reinicias ngrok (plan Free) la URL cambia, así que hay que actualizar el endpoint en el Dashboard y el `STRIPE_WEBHOOK_SECRET` de nuevo.
+```text
+https://xxxxxxxx.ngrok-free.dev/api/stripe/webhook
+```
 
-### 5. Ejecuta el proyecto
+4. Copia el valor `whsec_...` generado por Stripe.
+5. Guárdalo en:
+
+```env
+STRIPE_WEBHOOK_SECRET=
+```
+
+#### ¿Por qué utilizar ngrok?
+
+En este proyecto se utiliza **ngrok** en lugar de `stripe listen` porque permite trabajar exactamente igual que en producción.
+
+Ventajas:
+
+- Stripe envía eventos a un endpoint real.
+- Se prueba el mismo flujo utilizado en producción.
+- Es posible probar Checkout y los redireccionamientos completos.
+- La aplicación puede abrirse desde otros dispositivos durante el desarrollo.
+- El inspector de ngrok (`http://127.0.0.1:4040`) facilita la depuración de cada petición recibida.
+
+Como contrapartida, la URL cambia cada vez que se reinicia ngrok (plan gratuito), por lo que es necesario actualizar el endpoint en Stripe y el valor de `STRIPE_WEBHOOK_SECRET`.
+
+---
+
+### 6. Ejecutar el proyecto
+
+Servidor de desarrollo:
 
 ```bash
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+La aplicación estará disponible en:
+
+```text
+http://localhost:3000
+```
+
+---
+
+### 7. Build de producción
+
+Generar la versión de producción:
+
+```bash
+npm run build
+```
+
+Iniciar el servidor de producción:
+
+```bash
+npm run start
+```
+
+---
+
+### 8. Lint
+
+Antes de desplegar la aplicación es recomendable comprobar que el proyecto no contiene errores de lint.
+
+```bash
+npm run lint
+```
+
+Los comandos `npm run lint` y `npm run build` deberían completarse sin errores antes de realizar cualquier despliegue.
 
 ---
 
 ## Arquitectura del proyecto
 
-- **Route Handlers** (`src/app/api/**/route.js`) implementan la API de la aplicación: envío y gestión de conversaciones, integración con Stripe (Checkout, Billing Portal, precios y Webhooks) y consulta del estado de la suscripción.
-- **`lib/`** concentra la lógica de negocio reutilizable entre rutas: acceso a Supabase (`conversations.js`, `subscriptions.js`), clientes (`supabase.js` cliente / `supabaseAdmin.js` servidor, `stripe.js`), parseo SSE de Gemini (`sse.js`) y la fuente única de verdad de los planes (`plans.js`).
-- **`hooks/`**: `useAskly` gestiona el envío de mensajes y el streaming en el cliente; `useSubscription` mantiene sincronizado el plan activo mediante Supabase Realtime.
-- **Autenticación por Bearer token**: el cliente adjunta el `access_token` de la sesión de Supabase en cada llamada a la API (mensajes, borrado de conversación, Stripe); el servidor lo valida con `getUserFromAuthorization()` (`lib/subscriptions.js`), que llama a `supabaseAdmin.auth.getUser(token)` pasando el token explícitamente.
-- **Gating de planes real**: el límite diario de mensajes del plan Free se calcula contando mensajes en Postgres (`countTodayUserMessages`), no con un contador de cliente que se resetea al recargar.
+Askly está construido siguiendo una arquitectura modular basada en **Next.js App Router**, donde cada responsabilidad se encuentra claramente separada entre la interfaz, la lógica de negocio y los servicios externos utilizados por la aplicación.
+
+La aplicación se organiza alrededor de cinco pilares principales:
+
+- **Autenticación y autorización**
+- **Conversaciones con IA**
+- **Análisis de documentos**
+- **Gestión de suscripciones**
+- **Sincronización en tiempo real**
+
+Esta separación facilita el mantenimiento del código y la reutilización de lógica entre rutas a medida que el proyecto crece.
 
 ---
 
@@ -139,164 +294,281 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 ```text
 askly/
-├── src/app/
-│   ├── api/
-│   │   ├── conversations/
-│   │   │   ├── [id]/route.js                 # DELETE: eliminar conversación
-│   │   │   └── messages/route.js             # Envío de mensajes + streaming Gemini
-│   │   ├── stripe/checkout/route.js          # Crear sesión de Stripe Checkout
-│   │   ├── stripe/portal/route.js            # Abrir Billing Portal
-│   │   ├── stripe/prices/route.js            # Precios en vivo desde Stripe
-│   │   ├── stripe/webhook/route.js           # Sincroniza suscripciones
-│   │   └── subscription/status/route.js      # Estado del plan activo
-│   │
-│   ├── chat/[id]/page.jsx
-│   ├── login/page.jsx
-│   ├── register/page.jsx
-│   ├── pricing/page.jsx
-│   ├── page.jsx
-│   ├── layout.jsx
-│   │
-│   ├── components/
-│   │   ├── Sidebar.jsx                       # Historial, menú de usuario, borrar chats
-│   │   ├── Composer.jsx
-│   │   ├── MessageList.jsx
-│   │   ├── ModelDropdown.jsx
-│   │   ├── MejorarButton.jsx                 # CTA flotante hacia /pricing
-│   │   ├── AuthCard.jsx / AuthInput.jsx / AuthButton.jsx
-│   │   ├── Logo.jsx / Footer.jsx
-│   │
-│   ├── hooks/
-│   │   ├── useAskly.js
-│   │   └── useSubscription.js
-│   │
-│   └── lib/
-│       ├── supabase.js / supabaseAdmin.js
-│       ├── stripe.js
-│       ├── plans.js
-│       ├── subscriptions.js
-│       ├── conversations.js                  # CRUD conversaciones/mensajes
-│       └── sse.js
+├── src/
 │
-└── supabase/
-    ├── subscriptions.sql
-    └── conversations.sql
+├── app/
+│   ├── api/
+│   │   ├── attachments/
+│   │   ├── audio/
+│   │   ├── conversations/
+│   │   ├── stripe/
+│   │   └── subscription/
+│   │
+│   ├── chat/
+│   ├── login/
+│   ├── register/
+│   ├── pricing/
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   ├── layout.jsx
+│   └── page.jsx
+│
+├── supabase/
+│   ├── conversations.sql
+│   ├── subscriptions.sql
+│   └── attachments.sql
+│
+└── public/
 ```
 
 ---
 
-## Conversaciones
+## Sistema de conversaciones
 
-Askly guarda las conversaciones en Supabase:
+Las conversaciones se almacenan de forma persistente en **Supabase PostgreSQL**, permitiendo que cada usuario mantenga su historial incluso después de cerrar sesión.
 
-- `conversations`: título, usuario, fechas.
-- `messages`: mensajes del usuario y del modelo.
+La base de datos se estructura principalmente en cuatro tablas:
 
-El sidebar muestra las conversaciones recientes y permite eliminarlas desde un menú de tres puntos.
+- `subscriptions`
+- `conversations`
+- `messages`
+- `message_attachments`
 
-Ruta usada para eliminar:
+Cada conversación pertenece a un único usuario y cada mensaje queda asociado a su conversación correspondiente mediante claves foráneas.
 
-```
-DELETE /api/conversations/[id]
-```
+La relación entre `messages`, `conversations` y `message_attachments` utiliza **ON DELETE CASCADE**, de modo que al eliminar una conversación también se eliminan automáticamente todos sus mensajes y adjuntos.
 
-El cliente envía el `access_token` de Supabase como Bearer token. El servidor valida el usuario antes de borrar y solo elimina la conversación si pertenece a ese usuario (`user_id` coincide en la query de borrado).
+El historial se muestra en el sidebar y permite:
+
+- crear nuevas conversaciones
+- recuperar conversaciones anteriores
+- renombrar y eliminar conversaciones
+- buscar dentro del historial
+- mantener el contexto entre sesiones
+
+Las operaciones de borrado y renombrado están protegidas mediante autenticación y solo pueden realizarse sobre conversaciones pertenecientes al usuario autenticado.
 
 ---
 
-## Planes
+## Análisis de documentos
 
-La definición de planes vive en `src/app/lib/plans.js`.
+Askly permite adjuntar documentos PDF y archivos de texto o código (por ejemplo `.txt`, `.md`, `.json`, `.csv` o archivos fuente) para utilizarlos como contexto durante la conversación con la IA.
 
-| Plan | Mensajes/día | Estado |
-|------|--------------|--------|
-| Free | 20 | Visible antes de pagar |
-| Pro | Ilimitados | Plan individual |
-| Team | Ilimitados | Plan de equipo |
+El flujo general es el siguiente:
 
-La página `/pricing` se adapta al plan actual:
+1. El usuario adjunta hasta 5 archivos en un mismo mensaje (PDF de hasta 5 MB, otros archivos de hasta 1 MB).
+2. El servidor extrae el texto: los PDF se procesan con **unpdf**, el resto de archivos se lee directamente como texto.
+3. El archivo original se guarda en un bucket privado de Supabase Storage y queda asociado al mensaje en la tabla `message_attachments`.
+4. El texto extraído se incorpora al contexto enviado al modelo, con un aviso para que la IA lo trate como material de referencia y no como instrucciones.
+5. Groq genera una respuesta teniendo en cuenta tanto la conversación como el contenido del documento, y la respuesta se transmite al cliente en streaming.
 
-- Usuario Free: ve Free, Pro y Team.
-- Usuario Pro: ve Pro como plan actual y Team como opción (cambio gestionado desde el Billing Portal).
-- Usuario Team: ve Team como plan actual y Pro como alternativa (también desde el portal).
-- El plan Free no se muestra como opción cuando el usuario ya tiene una suscripción activa.
+Los PDF sin texto seleccionable (por ejemplo, documentos escaneados) se rechazan con un aviso, ya que Askly no incluye reconocimiento óptico de caracteres (OCR). Los archivos adjuntos pueden reabrirse después mediante un visor de PDF integrado, que solicita una URL firmada y temporal al servidor.
 
-### Flujo de pago
+### Vista del análisis
 
+![Análisis de documentos](./public/03-document-analysis.png)
+
+Esta funcionalidad permite realizar preguntas sobre documentos sin necesidad de copiar manualmente su contenido dentro del chat.
+
+---
+
+## Transcripción de voz
+
+El composer incluye un botón de grabación que captura audio desde el navegador mediante `MediaRecorder`.
+
+Al detener la grabación, el audio se envía a `/api/audio/transcribe`, donde el servidor lo transcribe con el modelo **Whisper Large v3 Turbo** de Groq y devuelve el texto resultante. El texto se añade al campo de escritura para que el usuario lo revise antes de enviarlo; el audio no se almacena ni se envía automáticamente como mensaje.
+
+---
+
+## Planes y suscripciones
+
+Askly utiliza **Stripe** para gestionar pagos y suscripciones.
+
+Actualmente existen tres planes:
+
+| Plan | Mensajes diarios | Descripción |
+|------|------------------|-------------|
+| **Free** | 20 | Acceso gratuito con límite diario |
+| **Pro** | Ilimitados | Suscripción individual |
+| **Team** | Ilimitados | Suscripción para equipos |
+
+El límite del plan Free nunca se calcula en el cliente.
+
+Cada petición consulta directamente la base de datos para determinar el número real de mensajes enviados durante el día, evitando cualquier manipulación desde el navegador.
+
+---
+
+### Flujo de suscripción
+
+```text
+Pricing
+      │
+      ▼
+Stripe Checkout
+      │
+      ▼
+Stripe Webhook
+      │
+      ▼
+Supabase
+(subscriptions)
+      │
+      ▼
+Supabase Realtime
+      │
+      ▼
+useSubscription()
+      │
+      ▼
+Interfaz actualizada
 ```
-Pricing / MejorarButton
-  → /api/stripe/checkout
-  → Stripe Checkout
-  → /api/stripe/webhook
-  → tabla subscriptions
-  → Supabase Realtime
-  → useSubscription
-  → UI actualizada
-```
 
-Para usuarios con suscripción activa, los cambios de plan se gestionan desde el Billing Portal.
+Cuando un usuario completa un pago:
+
+1. Stripe envía un Webhook.
+2. El servidor actualiza la tabla `subscriptions`.
+3. Supabase Realtime detecta el cambio.
+4. El cliente actualiza automáticamente el plan activo.
+5. La interfaz refleja el nuevo estado sin necesidad de recargar la página.
+
+Como mecanismo de respaldo, la aplicación consulta el estado cada 60 segundos (con la pestaña visible) para cubrir los casos en los que Realtime no puede sincronizar inmediatamente los cambios.
+
+---
+
+### Planes y gestión de suscripciones
+
+![Planes](./public/04-plans-subscriptions.png)
 
 ---
 
 ## Modelo de IA
 
-Askly usa **Gemini 2.5 Flash** mediante `streamGenerateContent` + `alt=sse`. El backend actúa como intermediario entre el cliente y la API de Gemini, reenviando el streaming mediante SSE y almacenando la respuesta completa, una vez finaliza la generación.
+Askly utiliza **Qwen 3 32B** mediante la API de **Groq**.
+
+La aplicación actúa como intermediaria entre el cliente y el modelo de IA.
+
+En lugar de exponer directamente la API de Groq al navegador:
+
+- el cliente envía la petición al servidor
+- el servidor valida la autenticación
+- construye el contexto de conversación
+- solicita la respuesta a Groq
+- retransmite el contenido al cliente mediante **Server-Sent Events (SSE)**
+- almacena automáticamente la conversación cuando finaliza la generación
+
+Este enfoque permite mantener protegidas las credenciales del proveedor de IA y centralizar toda la lógica relacionada con límites de uso, autenticación y persistencia.
 
 ---
 
-## Retos y decisiones técnicas
+### Conversaciones con IA
 
-### Autenticación y protección de la API
-
-Se implementó un sistema completo de autenticación mediante Supabase Auth. Todas las operaciones protegidas validan el usuario a partir del `access_token` enviado como Bearer Token antes de acceder a conversaciones, mensajes o suscripciones.
-
-### Streaming de respuestas
-
-La integración con **Google Gemini** se realizó mediante **Server-Sent Events (SSE)**. El backend reenvía el flujo de datos al cliente en tiempo real y almacena la respuesta completa al finalizar la generación.
-
-
-### Sincronización del estado de la suscripción
-
-Tras un cambio de plan en Stripe, un **Webhook** actualiza la base de datos. La interfaz recibe automáticamente los cambios mediante **Supabase Realtime**, utilizando polling como mecanismo de respaldo cuando es necesario.
-
-### Gestión de planes
-
-El límite diario del plan Free se calcula siempre en el servidor utilizando la base de datos, evitando que pueda manipularse desde el cliente.
+![Conversación con Markdown y bloques de código](./public/02-stripe-supabase-conversation.png)
 
 ---
 
-## Capturas
+## Decisiones técnicas
 
-### Usuario registrado
-
-Después de crear una cuenta, Askly da la bienvenida al usuario mostrando su nombre, el plan activo (Free) y una interfaz lista para iniciar una nueva conversación.
-
-![Usuario registrado](./public/usuario_registrado.png)
-
-
-### Planes y suscripciones
-
-Página de planes donde los usuarios Free pueden comparar las opciones disponibles y mejorar a Pro o Team mediante Stripe Checkout.
-
-![Planes disponibles](./public/planes.png)
-
-
-### Plan Pro activo
-
-Tras completar el pago con Stripe, la aplicación actualiza automáticamente el estado de la suscripción. El usuario ve su plan actual (Pro) y puede gestionarlo o cambiar al plan Team desde el Billing Portal de Stripe.
-
-![Plan Pro activo](./public/plan_pro.png)
+Durante el desarrollo de Askly se tomaron varias decisiones con el objetivo de mantener una arquitectura sencilla y fácil de mantener.
 
 ---
 
-## Créditos
+### Streaming mediante Server-Sent Events
 
-Este proyecto utiliza los siguientes servicios:
+Las respuestas del modelo de IA se envían utilizando **Server-Sent Events (SSE)**.
 
-- **Google Gemini** — generación de respuestas mediante IA.
-- **Supabase** — autenticación, base de datos PostgreSQL y sincronización en tiempo real.
-- **Stripe** — gestión de pagos y suscripciones.
-- **Lucide** — iconografía.
+Este enfoque ofrece varias ventajas para una aplicación de conversación:
+
+- menor complejidad que una conexión WebSocket
+- comunicación unidireccional, suficiente para respuestas generadas por IA
+- integración sencilla con Route Handlers de Next.js
+- renderizado progresivo de las respuestas
+- menor consumo de recursos
+
 ---
 
-## Desarrollado por Hajar en 2026.
+### Autenticación con Supabase
+
+Toda la autenticación se gestiona mediante **Supabase Auth**.
+
+El servidor valida la identidad del usuario antes de permitir operaciones como:
+
+- crear conversaciones
+- recuperar historial
+- eliminar conversaciones
+- consultar suscripciones
+- generar respuestas mediante IA
+
+Las políticas **Row Level Security (RLS)** garantizan que cada usuario únicamente pueda acceder a sus propios datos.
+
+---
+
+### Persistencia de conversaciones
+
+Cada conversación se almacena automáticamente en PostgreSQL.
+
+Esto permite:
+
+- recuperar el historial completo
+- mantener el contexto entre sesiones
+- organizar conversaciones en el sidebar
+- eliminar conversaciones sin afectar a otras
+
+La persistencia se realiza desde el servidor para mantener la consistencia de los datos.
+
+---
+
+### Gestión de suscripciones
+
+El estado de las suscripciones nunca depende del cliente.
+
+El flujo completo es:
+
+```text
+Stripe Checkout
+        │
+        ▼
+Stripe Webhook
+        │
+        ▼
+Supabase
+        │
+        ▼
+Supabase Realtime
+        │
+        ▼
+Actualización automática de la interfaz
+```
+
+La información mostrada al usuario siempre proviene de la base de datos, evitando inconsistencias entre Stripe y la interfaz.
+
+---
+
+### Protección del plan gratuito
+
+Los límites diarios del plan Free se validan exclusivamente en el servidor.
+
+El cliente nunca decide:
+
+- cuántos mensajes quedan disponibles
+- qué plan tiene el usuario
+- cuándo debe bloquearse una petición
+
+Esta lógica evita manipulaciones desde el navegador y centraliza todas las reglas de negocio.
+
+---
+
+## Despliegue
+
+El proyecto puede desplegarse en plataformas compatibles con Next.js por ejemplo, Vercel.
+
+Para ello es necesario configurar las variables de entorno de Supabase, Groq y Stripe en la plataforma de despliegue, y crear un endpoint de Webhook en el Dashboard de Stripe que apunte a la URL de producción (`https://tu-dominio/api/stripe/webhook`), actualizando `STRIPE_WEBHOOK_SECRET` con el valor generado.
+
+---
+
+## ¿Hablamos?
+
+Este proyecto forma parte de mi portfolio personal y refleja mi proceso de aprendizaje continuo en desarrollo Full Stack.
+
+Si tienes algún comentario, sugerencia o simplemente quieres conectar, puedes enviarme un mensaje a través de GitHub.
+
